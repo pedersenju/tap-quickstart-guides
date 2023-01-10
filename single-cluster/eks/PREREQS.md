@@ -32,7 +32,7 @@
     tar -xvf DOWNLOADED-CLUSTER-ESSENTIALS-BUNDLE -C $HOME/tanzu-cluster-essentials
     ```
     * target cluster with kubectl
-    * Run the following. 
+    * Run the following:
     ```
     kubectl create namespace kapp-controller
     ```
@@ -100,7 +100,6 @@
 
     sudo cp $HOME/tanzu-cluster-essentials/imgpkg /usr/local/bin/imgpkg
     ```
-    
 
 ## Relocate TAP Packages to Registry
 
@@ -109,7 +108,7 @@ Log in to your image registry by running:
 ```
 docker login MY-REGISTRY
 ```
-Log in to the VMware Tanzu Network registry with your VMware Tanzu Network 
+Log in to the VMware Tanzu Network registry with your VMware Tanzu Network
 credentials by running:
 ```
 docker login registry.tanzu.vmware.com

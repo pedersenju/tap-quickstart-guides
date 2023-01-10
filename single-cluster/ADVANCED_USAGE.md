@@ -21,8 +21,8 @@ kind: Secret
 metadata:
   name: tapqs-git-secret
   annotations:
-    tekton.dev/git-0: https://github.com        
-type: kubernetes.io/basic-auth          
+    tekton.dev/git-0: https://github.com
+type: kubernetes.io/basic-auth
 stringData:
   username: GIT-USERNAME
   password: GIT-PASSWORD
@@ -35,12 +35,12 @@ EOF
 kubectl patch sa default -n default --type "json" -p '[{"op":"add","path":"/secrets/-","value":{"name": "tapqs-git-secret"}}]'
 ```
 
-4. create a branch for `workloads` and `deliverables` in the git repo. 
+4. create a branch for `workloads` and `deliverables` in the git repo.
 
 5. create an app that syncs the deliverables and workloads into the cluster. replace `YOUR_ORG` with your github org.
 
 ```bash
-cat <<'EOF'  | kubectl -n default apply -f - 
+cat <<'EOF'  | kubectl -n default apply -f -
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -83,7 +83,7 @@ spec:
       ref: origin/deliverables
   template:
   - ytt: {}
-  deploy: 
+  deploy:
   - kapp:
       rawOptions: ["--dangerous-allow-empty-list-of-resources=true"]
 ---
@@ -100,7 +100,7 @@ spec:
       ref: origin/workloads
   template:
   - ytt: {}
-  deploy: 
+  deploy:
   - kapp:
       rawOptions: ["--dangerous-allow-empty-list-of-resources=true"]
 EOF
@@ -117,11 +117,11 @@ kind: Pipeline
 metadata:
   name: developer-defined-tekton-pipeline
   labels:
-    apps.tanzu.vmware.com/pipeline: test     
+    apps.tanzu.vmware.com/pipeline: test
 spec:
   params:
-    - name: source-url                        
-    - name: source-revision                   
+    - name: source-url
+    - name: source-revision
   tasks:
     - name: test
       params:
@@ -201,7 +201,7 @@ EOF
 
 This is needed in order get scan results in the tap GUI. Official docs [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.3/tap/GUID-scst-store-create-service-account.html#ro-serv-accts)
 
-create the service account and a secret. 
+Create the service account and a secret:
 
 ```bash
 kubectl apply -f - -o yaml << EOF
@@ -271,7 +271,7 @@ shared:
 
 
 profile: full
-supply_chain: testing_scanning #ADVANCED - add testing and scanning 
+supply_chain: testing_scanning #ADVANCED - add testing and scanning
 
 ootb_supply_chain_testing_scanning: #ADVANCED - add testing and scanning
   external_delivery: true #ADVANCED - makes the deliverable external for gitops
@@ -360,7 +360,7 @@ Once the above is complete the workload should go through the full supply chain 
 kubectl get configmap <workload-name> -n default -o go-template='{{.data.deliverable}}'
 ```
 
-2. Copy the yaml output from the above command and commit it to the `deliverables` branch in our git repo under the filename `<workload-name>.yaml`. Due to a current bug we need to add two labels to the yaml that was output. 
+2. Copy the yaml output from the above command and commit it to the `deliverables` branch in our git repo under the filename `<workload-name>.yaml`. Due to a current bug we need to add two labels to the yaml that was output.
 
 ```yaml
 carto.run/workload-name: <workload-name>
