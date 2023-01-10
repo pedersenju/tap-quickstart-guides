@@ -13,5 +13,4 @@ A collection of "quick start" guides.
 ## Targets
 
 * [vSphere with Tanzu](tkgs/README.md)
-* 
 * [EKS](eks/PREREQS.md)
