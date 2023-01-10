@@ -19,7 +19,7 @@
 * EKS cluster running 1.22 or later
 * If you are using EKS 1.23 or later make sure to enable the EBS CSI add-on and provide it proper permissions to create EBS volumes. [docs here](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)
 
-#### TAP Full Profile Install (Single Cluster)
+#### TAP Full, View, Build, Run, or Iterate Profile Installs
 
 * 8 GB of RAM available per node to Tanzu Application Platform.
 * 16 vCPUs available across all nodes to Tanzu Application Platform.(ex. 4 x t3.xlarge)
@@ -37,7 +37,7 @@
     kubectl create namespace kapp-controller
     ```
 
-    * If your registry requires a custom certificate to trust it run the following command to create a kapp controller config with the CA cert.
+    * If your container registry requires a custom certificate to trust it run the following command to create a kapp controller config with the CA cert.
 
     ```
     kubectl create secret generic kapp-controller-config \
