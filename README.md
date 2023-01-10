@@ -12,6 +12,7 @@ A collection of _*quick start*_ guides.
 
 ## Targets
 
+<<<<<<< HEAD
 ### Single-cluster
 
 * [vSphere with Tanzu](single-cluster/tkgs/README.md)
@@ -21,3 +22,7 @@ A collection of _*quick start*_ guides.
 ### Multi-cluster
 
 * How to [guide](multi-cluster/README.md) for installing `build`, `iterate`, `run`, and/or `view` profiles in a multi-cluster footprint
+=======
+* [vSphere with Tanzu](tkgs/README.md)
+* [EKS](eks/PREREQS.md)
+>>>>>>> 4f7d818 (fix typo)
