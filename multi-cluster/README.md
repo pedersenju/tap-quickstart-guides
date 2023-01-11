@@ -5,6 +5,10 @@
 
 ## Prerequisites
 
+### Accept EULAS
+
+See https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install-tanzu-cli.html.  You must accept End User License Agreements.
+
 ### Credentials
 
 * Container image registry (host, username, password)
@@ -12,28 +16,24 @@
 
 ### Container image registry
 
-* Tanzu Application Platform image/packages have been relocated to your desired container image registry (e.g., Harbor)
+* Tanzu Application Platform image/packages have been [relocated](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install-air-gap.html#relocate-images-to-a-registry-0) to your desired container image registry (e.g., Harbor)
 
 ### CLIs
 
-* kubectl
-* ytt
-* tanzu
- * appropriate plugins have been installed too
+* [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) - recommend version 1.24.9 or better
+* [ytt](https://carvel.dev/ytt/docs/latest/install/) - recommend v0.44.0 or better
+* [tanzu](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.6/vmware-tanzu-kubernetes-grid-16/GUID-install-cli.html#install-the-tanzu-cli-1) - recommend 1.6.1 or better
+ * [appropriate TAP plugins](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/cli-plugins-tanzu-cli.html#install-new-plugins-4) have been installed too
 
 ### Cluster
 
-* Cluster Essentials (kapp-controller and secretgen-controller) is installed and running in cluster
+* [Cluster Essentials](https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/1.4/cluster-essentials/deploy.html) (kapp-controller and secretgen-controller) is installed and running in cluster
   * If you're targeting TKG clusters these controllers are already installed
-* Tanzu Application Platform image bundles have been relocated to a repository in your container image registry
-* Tanzu Application Platform repository has been installed
-* Container image credentials stored as k8s Secret on cluster named container-registry-credentials
+* Tanzu Application Platform [package repository has been installed](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#add-the-tanzu-application-platform-package-repository-1)
+* Container image credentials stored as k8s Secret on cluster named `container-registry-credentials`
   * in install namespace (see tap.namespace in config.yaml)
   * in developer namespace (see tap.devNamespace in config.yaml)
-* Contour, cert-manager, and external-dns have been configured and installed
-  * ClusterIssuer installed
-  * Wildcard Certificate issued and valid
-  * TLSCertificateDelegation configured
+
 
 ### Configuration
 

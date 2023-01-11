@@ -166,8 +166,3 @@ contour:
 
 image_policy_webhook:
   allow_unmatched_images: true
-
-package_overlays:
-- name:  learningcenter
-  secrets:
-  - name: learningcenter-config-overlay

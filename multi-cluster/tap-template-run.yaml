@@ -11,7 +11,7 @@ shared:
   #! ingress_issuer: #@ data.values.tap.cluster.issuerRef.name
 
 #! supply_chain can be configured to be either [ basic, testing_scanning ]
-supply_chain: testing_scanning
+supply_chain: basic
 
 ootb_supply_chain_basic:
   #! cluster_builder: #@ data.values.tap.supply_chain.cluster_builder

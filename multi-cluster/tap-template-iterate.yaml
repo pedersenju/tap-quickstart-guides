@@ -23,7 +23,7 @@ buildservice:
 supply_chain: basic
 
 ootb_supply_chain_basic:
-  cluster_builder: full
+  #! cluster_builder: full
   registry:
     server: #@ data.values.tap.credentials.registry.host
     repository: #@ data.values.tap.registry.repositories.ootbSupplyChain
