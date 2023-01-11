@@ -2,17 +2,13 @@
 ---
 profile: iterate
 
-excluded_packages:
-  - cert-manager.tanzu.vmware.com
-  - contour.tanzu.vmware.com
-  - policy.apps.tanzu.vmware.com
-
 #! installed_for_vmware_internal_use: "true"
 ceip_policy_disclosed: true
 
 shared:
   ingress_domain: #@ data.values.tap.domains.main
-  ingress_issuer: #@ data.values.tap.cluster.issuerRef.name
+  #! Uncomment the line below if you wish to supply your own ClusterIssuer
+  #! ingress_issuer: #@ data.values.tap.cluster.issuerRef.name
 
 buildservice:
   kp_default_repository: #@ "{}/{}".format(data.values.tap.credentials.registry.host, data.values.tap.registry.repositories.buildService)
