@@ -82,6 +82,30 @@ tanzu package installed update tap -v 1.4.0 --values-file tap-values-{profile}.y
 tanzu package installed list -A
 ```
 
+## Post-install
+
+You will need to perform 2 steps after completing installation of all of the following TAP profiles
+
+* build
+* iterate
+* view
+* run
+
+### Authorizing access to the metadata-store
+
+Run the script provided.
+
+```bash
+./prepare-metadata-store-secrets.sh {base64-encoded-kubeconfig-contents-of-tap-view-cluster} {base64-encoded-kubeconfig-contents-of-tap-build-cluster}
+```
+
+### Onboarding clusters to App Live View
+
+The cluster with the TAP `view` profile installed needs to be made aware of other TAP profiles installed on clusters participating in the multi-cluster footprint.
+
+Please follow the documented procedure [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-cluster-view-setup.html) capturing the necessary details for each cluster to then add to the [secrets.yaml](secrets.yaml) file - see lines 36-72.
+
+
 ## Uninstall
 
 To uninstall, you will simply invoke
