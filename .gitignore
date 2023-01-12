@@ -5,3 +5,4 @@
 # Miscellaneous
 dist/
 tap-values*.yaml
+*-policy.json
