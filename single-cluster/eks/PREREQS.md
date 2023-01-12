@@ -108,7 +108,7 @@
 
 ### If you are using ECR
 
-ECR has some differences with other registries especially when using it with EKS. Follow these steps. If you are not using ECR skip to the next section.
+ECR has some differences with other registries especially when using it with EKS. Follow these steps. If you are not using ECR skip to the[ next section](#if-you-are-using-harbor-dockerhub-etc).
 
 export required environment variables
 
