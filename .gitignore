@@ -1,1 +1,7 @@
+# IDE
+.vscode/
 .history/
+
+# Miscellaneous
+dist/
+tap-values*.yaml

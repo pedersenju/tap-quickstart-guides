@@ -89,6 +89,8 @@
     cd $HOME/tanzu
     export VERSION=v0.25.0
     install cli/core/$VERSION/tanzu-core-darwin_amd64 /usr/local/bin/tanzu
+
+    tanzu plugin install --local cli all
     ```
     * Verify Tanzu CLI version by running `tanzu version`
 
