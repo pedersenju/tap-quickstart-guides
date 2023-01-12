@@ -51,6 +51,14 @@ kubectl config use-context {context-name}
 ```
 > Replace `{context-name}` above with context name of an (existing) cluster.
 
+## Pre-install
+
+Create developer namespace
+
+```bash
+kubectl create namespace development
+```
+> The name of the namespace above should match the tap.devNamespace value in config.yaml
 
 ## Install
 
