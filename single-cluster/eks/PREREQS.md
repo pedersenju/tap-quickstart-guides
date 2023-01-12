@@ -103,25 +103,270 @@
     sudo cp $HOME/tanzu-cluster-essentials/imgpkg /usr/local/bin/imgpkg
     ```
 
-## Relocate TAP Packages to Registry
+
+## Setup TAP package repo
+
+### If you are using ECR
+
+ECR has some differences with other registries especially when using it with EKS. Follow these steps. If you are not using ECR skip to the[ next section](#if-you-are-using-harbor-dockerhub-etc).
+
+export required environment variables
+
+```bash
+export AWS_ACCOUNT_ID=ACCOUNT_ID
+export AWS_REGION=us-west-2
+export EKS_CLUSTER_NAME=CLUSTER-NAME
+```
+
+create a repository for the relocated images and build service image builds.
+
+```bash
+aws ecr create-repository --repository-name tap-images --region $AWS_REGION
+aws ecr create-repository --repository-name tap-build-service --region $AWS_REGION
+```
+
+setup IAM roles for write permissions to the ECR registries. full docs can be found [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/aws-resources.html#create-iam-roles-5)
+
+
+```bash
+export OIDCPROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --output json | jq '.cluster.identity.oidc.issuer' | tr -d '"' | sed 's/https:\/\///')
+```
+
+```bash
+cat << EOF > build-service-trust-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDCPROVIDER}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "${OIDCPROVIDER}:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "${OIDCPROVIDER}:sub": [
+                        "system:serviceaccount:kpack:controller",
+                        "system:serviceaccount:build-service:dependency-updater-controller-serviceaccount"
+                    ]
+                }
+            }
+        }
+    ]
+}
+EOF
+```
+
+```bash
+cat << EOF > build-service-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ecr:DescribeRegistry",
+                "ecr:GetAuthorizationToken",
+                "ecr:GetRegistryPolicy",
+                "ecr:PutRegistryPolicy",
+                "ecr:PutReplicationConfiguration",
+                "ecr:DeleteRegistryPolicy"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "TAPEcrBuildServiceGlobal"
+        },
+        {
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:ListImages",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:DescribeImageScanFindings",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecr:GetRepositoryPolicy",
+                "ecr:ListTagsForResource",
+                "ecr:TagResource",
+                "ecr:UntagResource",
+                "ecr:BatchDeleteImage",
+                "ecr:BatchImportUpstreamImage",
+                "ecr:CompleteLayerUpload",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:CreateRepository",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:DeleteRepository",
+                "ecr:InitiateLayerUpload",
+                "ecr:PutImage",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:PutImageTagMutability",
+                "ecr:PutLifecyclePolicy",
+                "ecr:PutRegistryScanningConfiguration",
+                "ecr:ReplicateImage",
+                "ecr:StartImageScan",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:UploadLayerPart",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:SetRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-build-service",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-images"
+            ],
+            "Effect": "Allow",
+            "Sid": "TAPEcrBuildServiceScoped"
+        }
+    ]
+}
+EOF
+```
+
+```bash
+cat << EOF > workload-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ecr:DescribeRegistry",
+                "ecr:GetAuthorizationToken",
+                "ecr:GetRegistryPolicy",
+                "ecr:PutRegistryPolicy",
+                "ecr:PutReplicationConfiguration",
+                "ecr:DeleteRegistryPolicy"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "TAPEcrWorkloadGlobal"
+        },
+        {
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:ListImages",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:DescribeImageScanFindings",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecr:GetRepositoryPolicy",
+                "ecr:ListTagsForResource",
+                "ecr:TagResource",
+                "ecr:UntagResource",
+                "ecr:BatchDeleteImage",
+                "ecr:BatchImportUpstreamImage",
+                "ecr:CompleteLayerUpload",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:CreateRepository",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:DeleteRepository",
+                "ecr:InitiateLayerUpload",
+                "ecr:PutImage",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:PutImageTagMutability",
+                "ecr:PutLifecyclePolicy",
+                "ecr:PutRegistryScanningConfiguration",
+                "ecr:ReplicateImage",
+                "ecr:StartImageScan",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:UploadLayerPart",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:SetRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-build-service",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tanzu-application-platform/tanzu-java-web-app",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tanzu-application-platform/tanzu-java-web-app-bundle",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tanzu-application-platform",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tanzu-application-platform/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "TAPEcrWorkloadScoped"
+        }
+    ]
+}
+EOF
+```
+
+```bash
+cat << EOF > workload-trust-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDCPROVIDER}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "${OIDCPROVIDER}:sub": "system:serviceaccount:default:default",
+                    "${OIDCPROVIDER}:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
+EOF
+```
+
+```bash
+# Create the Tanzu Build Service Role
+aws iam create-role --role-name tap-build-service --assume-role-policy-document file://build-service-trust-policy.json
+# Attach the Policy to the Build Role
+aws iam put-role-policy --role-name tap-build-service --policy-name tapBuildServicePolicy --policy-document file://build-service-policy.json
+
+# Create the Workload Role
+aws iam create-role --role-name tap-workload --assume-role-policy-document file://workload-trust-policy.json
+# Attach the Policy to the Workload Role
+aws iam put-role-policy --role-name tap-workload --policy-name tapWorkload --policy-document file://workload-policy.json
+```
+
+Login to the ECR registry
+
+```bash
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+```
+
+export the variables required to relocate images. All that should be changed below is tap version number. e.g. `1.4.0`
+
+```bash
+export TAP_VERSION=VERSION-NUMBER
+export INSTALL_REGISTRY_HOSTNAME=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+export INSTALL_REPO=tap-images
+```
+
+### If you are using Harbor, dockerhub etc.
+
+If you are not using ECR follow these steps.
 
 Install Docker if it is not already installed.
 Log in to your image registry by running:
 ```
 docker login MY-REGISTRY
 ```
-Log in to the VMware Tanzu Network registry with your VMware Tanzu Network
-credentials by running:
-```
-docker login registry.tanzu.vmware.com
-```
+
 Set up environment variables for installation use by running:
 ```
 export INSTALL_REGISTRY_USERNAME=MY-REGISTRY-USER
 export INSTALL_REGISTRY_PASSWORD=MY-REGISTRY-PASSWORD
 export INSTALL_REGISTRY_HOSTNAME=MY-REGISTRY
 export TAP_VERSION=VERSION-NUMBER
-export INSTALL_REPO=TARGET-REPOSITORY
+export INSTALL_REPO=TARGET-REPOSITORY/tap-packages
 ```
 Where:
 
@@ -135,25 +380,44 @@ Where:
 
 * `TARGET-REPOSITORY` is your target repository, a folder/repository on `MY-REGISTRY` that serves as the location for the installation files for Tanzu Application Platform.
 
-Relocate the images with the imgpkg CLI by running:
+### Relocate images
 
-    imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
+Log in to the VMware Tanzu Network registry with your VMware Tanzu Network
+credentials by running:
+```
+docker login registry.tanzu.vmware.com
+```
+
+Relocate the images with the imgpkg CLI by running:
+```bash
+imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}
+```
+
+
+### Install the package repo
 Create a namespace called tap-install for deploying any component packages by running:
 
-    kubectl create ns tap-install
+```bash
+kubectl create ns tap-install
+``` 
+
 This namespace keeps the objects grouped together logically.
 
-Create a registry secret by running:
+**If you are not using ECR**, create a registry secret by running:
 
-    tanzu secret registry add tap-registry \
-      --username ${INSTALL_REGISTRY_USERNAME} --password ${INSTALL_REGISTRY_PASSWORD} \
-      --server ${INSTALL_REGISTRY_HOSTNAME} \
-      --export-to-all-namespaces --yes --namespace tap-install
+```bas
+tanzu secret registry add tap-registry \
+--username ${INSTALL_REGISTRY_USERNAME} --password ${INSTALL_REGISTRY_PASSWORD} \
+--server ${INSTALL_REGISTRY_HOSTNAME} \
+--export-to-all-namespaces --yes --namespace tap-install
+```
 Add the Tanzu Application Platform package repository to the cluster by running:
 
-    tanzu package repository add tanzu-tap-repository \
-      --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages:$TAP_VERSION \
-      --namespace tap-install
+```bash
+tanzu package repository add tanzu-tap-repository \
+--url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}:$TAP_VERSION \
+--namespace tap-install
+```
 Get the status of the Tanzu Application Platform package repository, and ensure the status updates to Reconcile succeeded by running:
 
     tanzu package repository get tanzu-tap-repository --namespace tap-install
