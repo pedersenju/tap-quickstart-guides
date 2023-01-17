@@ -115,18 +115,24 @@ export required environment variables
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 export AWS_REGION=us-west-2
-export EKS_CLUSTER_NAME=CLUSTER-NAME
 ```
 
-create a repository for the relocated images and build service image builds.
+create a repository for the relocated images,build service image builds, and for the supply chain images.
 
 ```bash
 aws ecr create-repository --repository-name tap-images --region $AWS_REGION
 aws ecr create-repository --repository-name tap-build-service --region $AWS_REGION
+aws ecr create-repository --repository-name tap-application-platform --region $AWS_REGION
 ```
 
-setup IAM roles for write permissions to the ECR registries. full docs can be found [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/aws-resources.html#create-iam-roles-5)
+setup IAM roles for write permissions to the ECR registries. full docs can be found [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/aws-resources.html#create-iam-roles-5). This only needs to be done for the clusters that are running the build and iterate profiles.
 
+For each cluster(build and iterate) run the following commands. This should result in two roles per cluster.
+
+```bash
+export EKS_CLUSTER_NAME=CLUSTER-NAME
+export DEVELOPER_NS=YOUR-DEV-NS
+```
 
 ```bash
 export OIDCPROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --output json | jq '.cluster.identity.oidc.issuer' | tr -d '"' | sed 's/https:\/\///')
@@ -314,7 +320,7 @@ cat << EOF > workload-trust-policy.json
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringEquals": {
-                    "${OIDCPROVIDER}:sub": "system:serviceaccount:default:default",
+                    "${OIDCPROVIDER}:sub": "system:serviceaccount:${DEVELOPER_NS}:default",
                     "${OIDCPROVIDER}:aud": "sts.amazonaws.com"
                 }
             }
@@ -326,14 +332,14 @@ EOF
 
 ```bash
 # Create the Tanzu Build Service Role
-aws iam create-role --role-name tap-build-service --assume-role-policy-document file://build-service-trust-policy.json
+aws iam create-role --role-name ${EKS_CLUSTER_NAME}-tap-build-service --assume-role-policy-document file://build-service-trust-policy.json
 # Attach the Policy to the Build Role
-aws iam put-role-policy --role-name tap-build-service --policy-name tapBuildServicePolicy --policy-document file://build-service-policy.json
+aws iam put-role-policy --role-name ${EKS_CLUSTER_NAME}-tap-build-service --policy-name tapBuildServicePolicy --policy-document file://build-service-policy.json
 
 # Create the Workload Role
-aws iam create-role --role-name tap-workload --assume-role-policy-document file://workload-trust-policy.json
+aws iam create-role --role-name ${EKS_CLUSTER_NAME}-tap-workload --assume-role-policy-document file://workload-trust-policy.json
 # Attach the Policy to the Workload Role
-aws iam put-role-policy --role-name tap-workload --policy-name tapWorkload --policy-document file://workload-policy.json
+aws iam put-role-policy --role-name ${EKS_CLUSTER_NAME}-tap-workload --policy-name tapWorkload --policy-document file://workload-policy.json
 ```
 
 Login to the ECR registry

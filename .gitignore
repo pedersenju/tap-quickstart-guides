@@ -8,3 +8,4 @@ tap-values*.yaml
 *-policy.json
 secrets.yaml
 config.yaml
+dev-namespace.yaml

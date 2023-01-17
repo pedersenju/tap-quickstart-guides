@@ -79,6 +79,12 @@ kubectl get service -n tanzu-system-ingress envoy --output jsonpath='{.status.lo
 
 Create a CNAME entry for the above hostname under `*.view.tap.mycompany.com` this will allow for all domains on the view cluster to resolve and route properly.
 
+Update the `tap.gui.proxy.metadata_store.token` value in the `secrets.yaml` with the token from the below command. After updating the file run the commands to update the install listed [here](#update)
+
+```bash
+kubectl get secrets metadata-store-read-write-client -n metadata-store -o jsonpath="{.data.token}" | base64 -d
+```
+
 ### Build Cluster
 
 Create developer namespace.
@@ -87,6 +93,30 @@ Create developer namespace.
 kubectl create namespace development
 ```
 > The name of the namespace above should match the tap.devNamespace value in config.yaml
+
+You will want to use the `ytt` CLI to populate a templated manifest with values from configuration and secrets values. Then you'll use the `tanzu` CLI invoking `package install` with appropriate arguments to install a specific TAP profile.
+
+
+```bash
+ytt -f tap-template-build.yaml -f config.yaml -f secrets.yaml > tap-values-build.yaml
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.4.0 --values-file tap-values-build.yaml -n tap-install
+```
+
+Setup the developer namespace. Official docs [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/namespace-provisioner-legacy-manual-namespace-setup.html). Use the commands below to setup the namespace.
+
+If you are using ECR use the below to get the role ARN that was setup in the prereqs. Add this to the value for `supply_chain.workload_arn` in `config.yaml` 
+
+```bash
+ aws iam get-role --role-name tap-workload --query 'Role.Arn'
+```
+
+Add the role bindings for the namespace service account.
+
+```bash
+ytt -f dev-namespace-template.yaml -f config.yaml -f secrets.yaml > dev-namespace.yaml
+kubectl apply -f dev-namespace.yaml
+```
+
 
 
 
@@ -156,7 +186,10 @@ tanzu package installed delete tap -n tap-install
 
 There will be a few DNS entries that need to be created. Since this is a guide for EKS this assumes route 53. This will also assume a standard naming convention that is implemented in the templates to make record creation easier An example of naming conventions is provided below.
 
-Base domain: mycompany.com
-TAP base domain: tap.mycompany.com
-TAP view domain: view.tap.mycompany.com
-TAP apps domain: apps.tap.mycompany.com
+**Base domain:** mycompany.com
+
+**TAP base domain:** tap.mycompany.com
+
+**TAP view domain:** view.tap.mycompany.com
+
+**TAP apps domain:** apps.tap.mycompany.com
