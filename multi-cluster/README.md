@@ -55,7 +55,31 @@ kubectl config use-context {context-name}
 ```
 > Replace `{context-name}` above with context name of an (existing) cluster.
 
-## Pre-install(Build Cluster Only)
+
+## Install
+
+
+### View Cluster
+
+You will want to use the `ytt` CLI to populate a templated manifest with values from configuration and secrets values. Then you'll use the `tanzu` CLI invoking `package install` with appropriate arguments to install a specific TAP profile.
+
+
+```bash
+ytt -f tap-template-view.yaml -f config.yaml -f secrets.yaml > tap-values-view.yaml
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.4.0 --values-file tap-values-view.yaml -n tap-install
+```
+
+Create a DNS record in route53 for the view cluster. You can see more about the DNS naming convention [here](#dns)
+
+Retrieve the load balancer's hostname.
+
+```bash
+kubectl get service -n tanzu-system-ingress envoy --output jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+Create a CNAME entry for the above hostname under `*.view.tap.mycompany.com` this will allow for all domains on the view cluster to resolve and route properly.
+
+### Build Cluster
 
 Create developer namespace.
 
@@ -64,7 +88,9 @@ kubectl create namespace development
 ```
 > The name of the namespace above should match the tap.devNamespace value in config.yaml
 
-## Install
+
+
+## Install Generic
 
 You will want to use the `ytt` CLI to populate a templated manifest with values from configuration and secrets values. Then you'll use the `tanzu` CLI invoking `package install` with appropriate arguments to install a specific TAP profile.
 
@@ -75,25 +101,6 @@ ytt -f tap-template-{profile}.yaml -f config.yaml -f secrets.yaml > tap-values-{
 tanzu package install tap -p tap.tanzu.vmware.com -v 1.4.0 --values-file tap-values-{profile}.yaml -n tap-install
 ```
 > Replace `{profile}` above with one of: `full`, `build`, `iterate`, `view`, `run`.
-
-### DNS
-
-There will be a few DNs entries that need to be created. Since this is a guide for EKS this assumes route 53. This will also assume a standard naming convention that is implemented in the templates to make record creation easier An example of naming conventions is provided below.
-
-Base domain: mycompany.com
-TAP base domain: tap.mycompany.com
-TAP view domain: view.tap.mycompany.com
-TAP apps domain: apps.tap.mycompany.com
-
-**View cluster:**
-
-Retrieve the load balancer's hostname.
-
-```bash
-kubectl get service -n tanzu-system-ingress envoy --output jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-```
-
-Create a CNAME entry for the above hostname under `*.view.tap.mycompany.com` this will allow for all domains on the view cluster to resolve and route properly.
 
 
 ## Update
@@ -144,3 +151,12 @@ To uninstall, you will simply invoke
 ```bash
 tanzu package installed delete tap -n tap-install
 ```
+
+## DNS
+
+There will be a few DNS entries that need to be created. Since this is a guide for EKS this assumes route 53. This will also assume a standard naming convention that is implemented in the templates to make record creation easier An example of naming conventions is provided below.
+
+Base domain: mycompany.com
+TAP base domain: tap.mycompany.com
+TAP view domain: view.tap.mycompany.com
+TAP apps domain: apps.tap.mycompany.com
