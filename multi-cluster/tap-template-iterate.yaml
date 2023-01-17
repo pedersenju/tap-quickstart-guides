@@ -14,8 +14,6 @@ buildservice:
   kp_default_repository: #@ "{}/{}".format(data.values.tap.credentials.registry.host, data.values.tap.registry.repositories.buildService)
   kp_default_repository_username: #@ data.values.tap.credentials.registry.username
   kp_default_repository_password: #@ base64.decode(data.values.tap.credentials.registry.password).rstrip()
-  tanzunet_username: #@ data.values.tap.credentials.tanzuNet.username
-  tanzunet_password: #@ data.values.tap.credentials.tanzuNet.password
   exclude_dependencies: true
   stack_configuration: #@ data.values.tap.stack_configuration
 

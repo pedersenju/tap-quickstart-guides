@@ -21,8 +21,6 @@ tap:
   #! This configuration is consumed in tap-template-*.yaml files
   #! cluster:
   #!   issuerRef:
-  #!     group: cert-manager.io
-  #!     kind: ClusterIssuer
   #!     name: letsencrypt-contour-cluster-issuer
 
   #! Uncomment all lines below if installing TAP on AWS
@@ -35,6 +33,7 @@ tap:
 
   #! These are the repositories hosting container images that will be created within your repo
   registry:
+    type: "" #! can be "ecr" or ""
     repositories:
       buildService: tanzu/build-service
       ootbSupplyChain: tanzu/supply-chain
@@ -51,6 +50,7 @@ tap:
   supply_chain:
     #! cluster_builder: full
     #! choices below are: [ go-git, libgit2 ]
+    workload_arn: "" #! only use if you are using ECR
     git_implementation: go-git
     gitops:
       enabled: "false"

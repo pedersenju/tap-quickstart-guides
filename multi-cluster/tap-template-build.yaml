@@ -1,4 +1,5 @@
 #@ load("@ytt:data", "data")
+#@ load("@ytt:base64","base64")
 ---
 profile: build
 
@@ -12,12 +13,14 @@ shared:
 
 buildservice:
   kp_default_repository: #@ "{}/{}".format(data.values.tap.credentials.registry.host, data.values.tap.registry.repositories.buildService)
+  #@ if data.values.tap.registry.type == "ecr":
+  kp_default_repository_aws_iam_role_arn: #@  data.values.tap.credentials.registry.aws_iam_role_arn
+  #@ else:
   kp_default_repository_username: #@ data.values.tap.credentials.registry.username
   kp_default_repository_password: #@ base64.decode(data.values.tap.credentials.registry.password).rstrip()
-  tanzunet_username: #@ data.values.tap.credentials.tanzuNet.username
-  tanzunet_password: #@ data.values.tap.credentials.tanzuNet.password
-  exclude_dependencies: true
-  stack_configuration: #@ data.values.tap.stack_configuration
+  #@ end
+
+  #! stack_configuration: #@ data.values.tap.stack_configuration
 
 #! supply_chain can be configured to be either [ basic, testing_scanning ]
 supply_chain: basic
@@ -64,21 +67,20 @@ ootb_supply_chain_testing_scanning:
   #@ end
   git_implementation: #@ data.values.tap.supply_chain.git_implementation
 
+#@ if data.values.tap.registry.type == "ecr":
+ootb_templates:
+  iaas_auth: true
+#@ end
+
 scanning:
   metadataStore:
     url: ""
-
-metadata_store:
-  ingress_enabled: "true"
-  ns_for_export_app_cert: #@ data.values.tap.devNamespace
-  app_service_type: ClusterIP
-
 grype:
   namespace: #@ data.values.tap.devNamespace
   targetImagePullSecret: "container-registry-credentials"
   targetSourceSshSecret: #@ data.values.tap.supply_chain.gitops.ssh_secret
   metadataStore:
-    url: #@ "{}.{}".format("https://metadata-store", data.values.tap.domains.main)
+    url: #@ "{}.{}".format("https://metadata-store", data.values.tap.domains.view)
     caSecret:
       name: store-ca-cert
       importFromNamespace: metadata-store-secrets
