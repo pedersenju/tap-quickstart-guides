@@ -37,11 +37,15 @@ See https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install
 
 ### Configuration
 
-Open, edit and save values in:
+copy the two configuration template files and then edit them with the appropriate values:
 
-* `config.yaml` file within this directory so that it is representative of your environment's unique configuration (should not include sensitive data)
-* `secrets.yaml` file, sensitive data like credentials are maintained here
+* `config-template.yaml` file within this directory so that it is representative of your environment's unique configuration (should not include sensitive data)
+* `secrets-template.yaml` file, sensitive data like credentials are maintained here
 
+```bash
+cp config-template.yaml config.yaml
+cp secrets-template.yaml secrets.yaml
+```
 
 ## Target a cluster
 
@@ -51,9 +55,9 @@ kubectl config use-context {context-name}
 ```
 > Replace `{context-name}` above with context name of an (existing) cluster.
 
-## Pre-install
+## Pre-install(Build Cluster Only)
 
-Create developer namespace
+Create developer namespace.
 
 ```bash
 kubectl create namespace development
@@ -71,6 +75,25 @@ ytt -f tap-template-{profile}.yaml -f config.yaml -f secrets.yaml > tap-values-{
 tanzu package install tap -p tap.tanzu.vmware.com -v 1.4.0 --values-file tap-values-{profile}.yaml -n tap-install
 ```
 > Replace `{profile}` above with one of: `full`, `build`, `iterate`, `view`, `run`.
+
+### DNS
+
+There will be a few DNs entries that need to be created. Since this is a guide for EKS this assumes route 53. This will also assume a standard naming convention that is implemented in the templates to make record creation easier An example of naming conventions is provided below.
+
+Base domain: mycompany.com
+TAP base domain: tap.mycompany.com
+TAP view domain: view.tap.mycompany.com
+TAP apps domain: apps.tap.mycompany.com
+
+**View cluster:**
+
+Retrieve the load balancer's hostname.
+
+```bash
+kubectl get service -n tanzu-system-ingress envoy --output jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+Create a CNAME entry for the above hostname under `*.view.tap.mycompany.com` this will allow for all domains on the view cluster to resolve and route properly.
 
 
 ## Update

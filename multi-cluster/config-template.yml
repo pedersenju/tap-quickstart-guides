@@ -40,14 +40,10 @@ tap:
       ootbSupplyChain: tanzu/supply-chain
 
   domains:
-    main: tap.tanzu.corp
-    tapGui: tap-gui.tap.tanzu.corp
-    learningCenter: learningcenter.tanzu.corp
-    knative: tanzu.corp
-
-  ingress:
-    contour_tls_secret: contourcert
-    contour_tls_namespace: tanzu-system-ingress
+    main: tap.mycompany.com
+    view: view.tap.mycompany.com
+    tapGui: tap-gui.view.tap.mycompany.com
+    knative: apps.tap.mycompany.com
 
   #! Change to "jammy-only" if you want to install Tanzu Application Platform with Ubuntu 22.04 (Jammy) as the only available stack
   stack_configuration: "default"

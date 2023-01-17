@@ -6,39 +6,22 @@ profile: view
 ceip_policy_disclosed: true
 
 shared:
-  ingress_domain: #@ data.values.tap.domains.main
+  ingress_domain: #@ data.values.tap.domains.view
   #! Uncomment the line below if you wish to supply your own ClusterIssuer
   #! ingress_issuer: #@ data.values.tap.cluster.issuerRef.name
 
 accelerator:
-  domain:  #@ data.values.tap.domains.main
   ingress:
     enable_tls: true
     include: true
+  tls:
+    secret_name: contourcert
   server:
     service_type: ClusterIP
-  tls:
-    namespace: #@ data.values.tap.ingress.contour_tls_namespace
-    secret_name: #@ data.values.tap.ingress.contour_tls_secret
-
-appliveview:
-  tls:
-    namespace: #@ data.values.tap.ingress.contour_tls_namespace
-    secretName: #@ data.values.tap.ingress.contour_tls_secret
-
-learningcenter:
-  ingressClass: "contour"
-  ingressDomain: #@ data.values.tap.domains.learningCenter
-  ingressSecret:
-    secretName: #@ data.values.tap.ingress.contour_tls_secret
 
 tap_gui:
   service_type: ClusterIP
   ingressEnabled: "true"
-  ingressDomain: #@ data.values.tap.domains.main
-  tls:
-    namespace: #@ data.values.tap.ingress.contour_tls_namespace
-    secretName: #@ data.values.tap.ingress.contour_tls_secret
   app_config:
     app:
       baseUrl: #@ "https://{}".format(data.values.tap.domains.tapGui)
@@ -72,7 +55,7 @@ tap_gui:
     #! Add proxy for accessing metadata store from the UI for CVE results
     proxy:
       /metadata-store:
-        target: #@ "{}.{}/api/v1".format("https://metadata-store", data.values.tap.domains.main)
+        target: #@ "{}.{}/api/v1".format("https://metadata-store", data.values.tap.domains.view)
         changeOrigin: true
         secure: false
         headers:
@@ -166,3 +149,7 @@ contour:
 
 image_policy_webhook:
   allow_unmatched_images: true
+
+excluded_packages:
+  - learningcenter.tanzu.vmware.com
+  - workshops.learningcenter.tanzu.vmware.com
