@@ -9,3 +9,4 @@ tap-values*.yaml
 secrets.yaml
 config.yaml
 dev-namespace.yaml
+store_ca.yaml
