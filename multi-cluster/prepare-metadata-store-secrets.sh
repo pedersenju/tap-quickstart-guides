@@ -10,31 +10,23 @@
 # * https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/scst-store-retrieve-access-tokens.html
 
 # Inputs:
-# * base64-encoded kubeconfig contents for cluster hosting TAP view profile
-# * base64-encoded kubeconfig contents for cluster hosting TAP build profile
+# * tap view cluster context name
+# * tap build cluster context name
 
 
 if [ -z "$1" ] && [ -z "$2" ]; then
-	echo "Usage: prepare-metadata-store.sh {base64-encoded-kubeconfig-contents-of-tap-view-cluster} {base64-encoded-kubeconfig-contents-of-tap-build-cluster}"
+	echo "Usage: prepare-metadata-store.sh {view-cluster-context-name} {build-cluster-context-name}"
 	exit 1
 fi
 
 SECRETS_NAMESPACE=metadata-store-secrets
-TAP_VIEW_KUBECONFIG_CONTENTS=${1}
-TAP_BUILD_KUBECONFIG_CONTENTS=${2}
 
-mkdir -p /tmp/.kube
-echo "$TAP_VIEW_KUBECONFIG_CONTENTS" | base64 --decode > /tmp/.kube/tap-view-config
-echo "$TAP_BUILD_KUBECONFIG_CONTENTS" | base64 --decode > /tmp/.kube/tap-build-config
-chmod 600 /tmp/.kube/tap-*-config
+echo "switching to view context $1"
+kubectl config use-context $1
 
-
-# Commands executed targeting cluster hosting TAP view profile
-
-export KUBECONFIG=/tmp/.kube/tap-view-config
-
-$ CA_CERT=$(kubectl get secret -n metadata-store ingress-cert -o json | jq -r ".data.\"ca.crt\"")
-$ cat <<EOF > store_ca.yaml
+echo "getting CA cert"
+CA_CERT=$(kubectl get secret --namespace metadata-store ingress-cert -o jsonpath='{.data.ca\.crt}')
+cat <<EOF > store_ca.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -46,18 +38,20 @@ data:
   ca.crt: $CA_CERT
 EOF
 
+echo "getting auth token"
 AUTH_TOKEN=$(kubectl get secrets metadata-store-read-write-client -n metadata-store -o jsonpath="{.data.token}" | base64 -d)
 
 
 # Commands executed targeting cluster hosting TAP build profile
 
-export KUBECONFIG=/tmp/.kube/tap-build-config
+echo "switching to build context $2"
+kubectl config use-context $2
 
 kubectl create ns ${SECRETS_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl apply -f store_ca.yaml
 
-kubectl delete secret store-auth-token \
+kubectl delete secret store-auth-token -n ${SECRETS_NAMESPACE} \
   --ignore-not-found
 
 kubectl create secret generic store-auth-token \
