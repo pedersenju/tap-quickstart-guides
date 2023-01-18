@@ -127,6 +127,8 @@ aws ecr create-repository --repository-name tap-application-platform --region $A
 
 setup IAM roles for write permissions to the ECR registries. full docs can be found [here](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/aws-resources.html#create-iam-roles-5). This only needs to be done for the clusters that are running the build and iterate profiles.
 
+**Make sure that you have created the IAM OIDC provider for your cluster.** The docs for this can be found [here] https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
+
 For each cluster(build and iterate) run the following commands. This should result in two roles per cluster.
 
 ```bash
