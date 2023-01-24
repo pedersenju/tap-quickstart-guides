@@ -60,15 +60,9 @@ contour:
       type: LoadBalancer
 
 cnrs:
-  default_tls_secret: #@ "{}/{}".format(data.values.tap.ingress.contour_tls_namespace, data.values.tap.ingress.contour_tls_secret)
+  #! default_tls_secret: #@ "{}/{}".format(data.values.tap.ingress.contour_tls_namespace, data.values.tap.ingress.contour_tls_secret)
   domain_name: #@ data.values.tap.domains.knative
   domain_template: "{{.Name}}-{{.Namespace}}.{{.Domain}}"
-  ingress:
-    internal:
-      namespace: tanzu-system-ingress
-    external:
-      namespace: tanzu-system-ingress
-
 appliveview_connector:
   backend:
     sslDisabled: false
