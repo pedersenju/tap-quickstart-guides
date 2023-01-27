@@ -164,7 +164,7 @@ You will need to perform 2 steps after completing installation of all of the fol
 Run the script provided.
 
 ```bash
-./prepare-metadata-store-secrets.sh {base64-encoded-kubeconfig-contents-of-tap-view-cluster} {base64-encoded-kubeconfig-contents-of-tap-build-cluster}
+./prepare-metadata-store-secrets.sh {view-cluster-context-name} {build-cluster-context-name}
 ```
 
 ### Onboarding clusters to App Live View
