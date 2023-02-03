@@ -1,4 +1,5 @@
 #@ load("@ytt:data", "data")
+#@ load("@ytt:base64","base64")
 ---
 profile: iterate
 
@@ -12,10 +13,12 @@ shared:
 
 buildservice:
   kp_default_repository: #@ "{}/{}".format(data.values.tap.credentials.registry.host, data.values.tap.registry.repositories.buildService)
+  #@ if data.values.tap.registry.type == "ecr":
+  kp_default_repository_aws_iam_role_arn: #@  data.values.tap.credentials.registry.aws_iam_role_arn
+  #@ else:
   kp_default_repository_username: #@ data.values.tap.credentials.registry.username
   kp_default_repository_password: #@ base64.decode(data.values.tap.credentials.registry.password).rstrip()
-  exclude_dependencies: true
-  stack_configuration: #@ data.values.tap.stack_configuration
+  #@ end
 
 #! supply_chain is pinned to basic as we want fast feedback in inner loop development
 supply_chain: basic
@@ -45,14 +48,8 @@ contour:
       type: LoadBalancer
 
 cnrs:
-  default_tls_secret: #@ "{}/{}".format(data.values.tap.ingress.contour_tls_namespace, data.values.tap.ingress.contour_tls_secret)
   domain_name: #@ data.values.tap.domains.knative
   domain_template: "{{.Name}}-{{.Namespace}}.{{.Domain}}"
-  ingress:
-    internal:
-      namespace: tanzu-system-ingress
-    external:
-      namespace: tanzu-system-ingress
 
 appliveview_connector:
   backend:
